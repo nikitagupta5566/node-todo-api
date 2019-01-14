@@ -49,13 +49,36 @@ UserSchema.methods.toJSON = function () {
 	return _.pick(userObject, ['_id', 'email']);
 }
 
+UserSchema.statics.findByToken = function (token) {
+	var User = this;
+	var decoded;
+
+	try {
+		decoded= jwt.verify(token, 'abc123');
+	} catch (e) {
+		// return new Promise((resolve,reject) => {
+		// 	reject(); or this can also be done as follows
+
+		return Promise.reject();
+		}
+
+	// console.log("decoded");
+	// console.log(decoded);
+	return User.findOne({
+		_id: decoded._id,
+		'tokens.token': token,
+		'tokens.access': 'auth'
+	});
+
+};
+
 UserSchema.methods.generateAuthToken = function () {
 	var user = this;
 	var access = 'auth';
 	var token = jwt.sign({_id: user._id.toHexString(), access}, 'abc123').toString();
 	user.tokens = user.tokens.concat([{access, token}])
 	
-	return user.save().then(() => {
+	return user.save().then(() => {     // to chain promises
 		return token;
 	});
 };
@@ -64,3 +87,6 @@ var User = mongoose.model('User', UserSchema);
 
 
 module.exports = {User};
+
+
+// https://www.udemy.com/the-complete-nodejs-developer-course-2/learn/v4/questions/1930840
