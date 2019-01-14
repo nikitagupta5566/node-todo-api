@@ -13,9 +13,12 @@ var app = express();
 app.use(bodyParser.json());
 
 app.post('/todos',(req,res) => {
+	// console.log(res);
 	var todo = new Todo({
 		text: req.body.text,
 	});
+
+	console.log(todo);
 
 	todo.save().then((doc) => {
 		res.send(doc);
@@ -26,9 +29,9 @@ app.post('/todos',(req,res) => {
 
 app.get('/todos', (req,res) => {
 	Todo.find().then((todos) => {
-		res.send({
-			todos,
-		})
+		res.send(
+			{todos}
+		)
 	},(e) => {
 		res.status(400).send(e);
 	})
@@ -95,7 +98,24 @@ app.patch('/todos/:id', (req,res) => {
 	},(e) => {
 		res.status(404).send();
 	})
-})
+});
+
+
+app.post('/users', (req,res) => {
+	var body = _.pick(req.body, ['email', 'password']);
+	// console.log("hello");
+	var user = new User(body);
+	// console.log(user);
+
+	user.save().then(() => {
+		// console.log("looo");
+		return user.generateAuthToken();
+	}).then((token) => {
+		res.header('x-auth', token).send(user);  
+	}).catch((e) => {
+		res.status(400).send(e);
+	})
+});
 
 app.listen(3000, () => {
 	console.log('Started on port 3000');
