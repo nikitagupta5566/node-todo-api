@@ -111,7 +111,7 @@ app.post('/users', (req,res) => {
 		// console.log("looo");
 		return user.generateAuthToken();
 	}).then((token) => {
-		res.header('x-auth', token).send(user);  
+		res.header('x-auth', token).send(user);  // x- indicates that it is a user defined header
 	}).catch((e) => {
 		res.status(400).send(e);
 	})
@@ -139,6 +139,23 @@ app.get('/users/me',authenticate, (req, res) => {
 	// })
 
 	res.send(req.user);
+})
+
+app.post('/users/login', (req, res) => {
+	var body = _.pick(req.body, ['email', 'password']);
+
+	User.findByCredentials(body.email, body.password).then((user) => {
+		console.log(user);
+		 return user.generateAuthToken().then((token) => {
+			res.header('x-auth', token).send(user);
+		})
+		// res.send(user);
+	}).catch((e) => {
+		res.status(400).send();
+	})
+
+	// console.log(user);
+	// res.send(user);
 })
 
 app.listen(3000, () => {
