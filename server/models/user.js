@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const validator = require('validator');
 const jwt = require('jsonwebtoken');
 const _ = require('lodash');
+const bcrypt = require('bcryptjs');
 
 var UserSchema = mongoose.Schema({
 	email: {
@@ -41,20 +42,38 @@ var UserSchema = mongoose.Schema({
 
 UserSchema.methods.toJSON = function () {
 	var user = this;
-	var userObject = user.toObject();
+	var userObject = user.toObject();    
+
 	console.log(user);
 	console.log();
 	console.log(userObject);
-
+//The user object has a lot of prototype methods that you can't see which is why you can call stuff like .save() on it.
+//Calling toObject on it, gets rid of all those other methods leaving you with just a regular object.
 	return _.pick(userObject, ['_id', 'email']);
 }
+
+UserSchema.pre('save', function (next) {
+	var user = this;
+
+	if(user.isModified('password')) {
+		 bcrypt.genSalt(10, (err, salt) => {
+			bcrypt.hash(user.password, salt, (err, hash) => {
+				user.password = hash;
+				next();
+			})
+		})
+
+	} else {
+		next();
+	}
+})
 
 UserSchema.statics.findByToken = function (token) {
 	var User = this;
 	var decoded;
 
 	try {
-		decoded= jwt.verify(token, 'abc123');
+		decoded = jwt.verify(token, 'abc123');
 	} catch (e) {
 		// return new Promise((resolve,reject) => {
 		// 	reject(); or this can also be done as follows
@@ -69,6 +88,10 @@ UserSchema.statics.findByToken = function (token) {
 		'tokens.token': token,
 		'tokens.access': 'auth'
 	});
+
+	// in user.findOne() function,why we used token and access property, when we could uniquely identify a user with only id.
+	// It's because the token might not exist anymore (it could've been deleted for whatever reason) so just 
+	// searching for the user isn't sufficient, we need to find their token as well.
 
 };
 

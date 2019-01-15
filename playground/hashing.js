@@ -1,7 +1,21 @@
 const {SHA256} = require('crypto-js');
 const jwt = require('jsonwebtoken');
 const {ObjectID} = require('mongodb');
+const bcrypt = require('bcryptjs');
 
+var password = '123abc!';
+
+bcrypt.genSalt(10, (err, salt) => {
+	bcrypt.hash(password, salt, (err, hash) => {
+		console.log("Hash is "+hash);
+	})
+})
+
+var hashedPassword = '$2a$10$J73gOUD8Lv/WV90hWf4WeubQae.bXX7BPgvvqOkGad6Ht0M2Tfqk6';
+
+bcrypt.compare(password, hashedPassword, (err,res) => {
+	console.log(res);
+})
 // console.log(id.toHexString().length);
 // console.log(id.toString().length);
 
